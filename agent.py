@@ -124,7 +124,7 @@ def build_tools() -> List[Dict[str, Any]]:                 # ✏️ Build 1, ste
         },
         {
             "name": "search_alternatives",
-            "description": "search",
+            "description": "Search for alternatives to the disrupted flight. Returns a list of options, each with a unique option_id.",
             "input_schema": {
                 "type": "object",
                 "properties": {"pnr": {"type": "string"}},
@@ -157,7 +157,9 @@ def build_tools() -> List[Dict[str, Any]]:                 # ✏️ Build 1, ste
         },
         {
             "name": "hold_seat",
-            "description": "Place a 15-minute hold on one alternative. Reversible. It simply expires.",
+            "description": "Place a 15-minute hold on one alternative."
+            "This is a reversible action by the user. The hold simply "
+            "expires after the 15 minutes if no request is made to reserve the flight.",
             "input_schema": {
                 "type": "object",
                 "properties": {"option_id": {"type": "string"}, "pnr": {"type": "string"}},
