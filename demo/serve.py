@@ -54,6 +54,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 
+from conversation_log import append_conversation_log  # noqa: E402
+
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 4390
 WORKSHOP = os.path.join(ROOT, ".workshop")
 
@@ -396,16 +398,34 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def _chat(self, body):
         t0 = time.time()
         pnr = body.get("pnr", "")
+        last_name = body.get("last_name", "")
+        message = body.get("message", "")
         agent = tracer = None
         try:
             agent = load_agent()
-            reply = agent.run_agent(pnr, body.get("last_name", ""), body.get("message", ""))
+            reply = agent.run_agent(pnr, last_name, message)
         except Exception as exc:  # noqa: BLE001
             tracer = _last_tracer()
+            append_conversation_log(
+                source="demo/serve.py",
+                pnr=pnr,
+                last_name=last_name,
+                prompt=message,
+                error=f"{type(exc).__name__}: {exc}",
+                tracer=tracer,
+            )
             return self._send({"error": error_card(exc, tracer, pnr),
                                "wall": round(time.time() - t0, 2)})
 
         tracer = _last_tracer()
+        append_conversation_log(
+            source="demo/serve.py",
+            pnr=pnr,
+            last_name=last_name,
+            prompt=message,
+            response=reply,
+            tracer=tracer,
+        )
         summary = tracer.summary() if tracer else {}
         payload = {
             "reply": reply,

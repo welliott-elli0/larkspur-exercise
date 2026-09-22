@@ -38,6 +38,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
 import agent  # noqa: E402
+from conversation_log import append_conversation_log  # noqa: E402
 from support import LAST, DEFAULT_LAST_NAME, DEFAULT_PNR, STAGE1_TASKS  # noqa: E402
 
 DEFAULT_MESSAGE = "My flight was disrupted. Can you help me figure out what happens next?"
@@ -108,6 +109,19 @@ def run_one(pnr: str, last_name: str, message: str, trace: bool, shape: str = ""
         saved = tracer.save(os.path.join(HERE, ".workshop", "last_trace.json"))
     except OSError as exc:
         save_error = f"{type(exc).__name__}: {exc}"
+
+    try:
+        append_conversation_log(
+            source="run.py",
+            pnr=pnr,
+            last_name=last_name,
+            prompt=message,
+            response=result,
+            error=failure,
+            tracer=tracer,
+        )
+    except OSError as exc:
+        print(f"\n  conversation log unavailable: {type(exc).__name__}: {exc}")
 
     s = tracer.summary()
     where = os.path.relpath(saved, HERE) if saved else f"not saved ({save_error})"
